@@ -16,7 +16,7 @@ export async function getRecommendedUsers(req,res){
         ]
      })
 
-     res.status(200).json({success:true,recommendedUsers})
+     res.status(200).json(recommendedUsers)
 
     }catch(error){
         console.log("Error in recommended User end point",error.message);
@@ -90,7 +90,7 @@ export async function sendFriendRequest(req,res){
 
 }
 
-export async function acceptFriendRequest(){
+export async function acceptFriendRequest(req,res){
     try{
         const {id:requestId}=req.params
         const friendRequest=await FriendRequest.findById(requestId);
@@ -111,10 +111,13 @@ export async function acceptFriendRequest(){
          await User.findByIdAndUpdate(friendRequest.recipient,{
             $addToSet:{friends:friendRequest.sender}
         })
+        res.status(200).json({ message: "Friend request accepted" });
+
 
     }catch(error){
 console.log("Error in acceptFriendRequest controller", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+  
+        res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
