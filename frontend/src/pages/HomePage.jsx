@@ -7,7 +7,12 @@ import {
   sendFriendRequest,
 } from "../lib/api";
 import { Link } from "react-router";
-import { CheckCircleIcon, MapPinIcon, UserPlusIcon, UsersIcon } from "lucide-react";
+import {
+  CheckCircleIcon,
+  MapPinIcon,
+  UserPlusIcon,
+  UsersIcon,
+} from "lucide-react";
 
 import { capitalize } from "../lib/utils";
 
@@ -15,6 +20,8 @@ import FriendCard, { getLanguageFlag } from "../components/FriendCard";
 import NoFriendsFound from "../components/NoFriendsFound";
 
 const HomePage = () => {
+  const [loadingUserId, setLoadingUserId] = useState(null);
+
   const queryClient = useQueryClient();
   const [outgoingRequestsIds, setOutgoingRequestsIds] = useState(new Set());
 
@@ -35,7 +42,13 @@ const HomePage = () => {
 
   const { mutate: sendRequestMutation, isPending } = useMutation({
     mutationFn: sendFriendRequest,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] }),
+    onSuccess: () =>
+     { queryClient.invalidateQueries({ queryKey: ["outgoingFriendReqs"] })
+     setLoadingUserId(null);
+  },
+  onError:()=>{
+    setLoadingUserId(null)
+  }
   });
 
   useEffect(() => {
@@ -52,7 +65,9 @@ const HomePage = () => {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="container mx-auto space-y-10">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Your Friends</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Your Friends
+          </h2>
           <Link to="/notifications" className="btn btn-outline btn-sm">
             <UsersIcon className="mr-2 size-4" />
             Friend Requests
@@ -77,9 +92,12 @@ const HomePage = () => {
           <div className="mb-6 sm:mb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Meet New Learners</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                  Meet New Learners
+                </h2>
                 <p className="opacity-70">
-                  Discover perfect language exchange partners based on your profile
+                  Discover perfect language exchange partners based on your
+                  profile
                 </p>
               </div>
             </div>
@@ -91,7 +109,9 @@ const HomePage = () => {
             </div>
           ) : recommendedUsers.length === 0 ? (
             <div className="card bg-base-200 p-6 text-center">
-              <h3 className="font-semibold text-lg mb-2">No recommendations available</h3>
+              <h3 className="font-semibold text-lg mb-2">
+                No recommendations available
+              </h3>
               <p className="text-base-content opacity-70">
                 Check back later for new language partners!
               </p>
@@ -113,7 +133,9 @@ const HomePage = () => {
                         </div>
 
                         <div>
-                          <h3 className="font-semibold text-lg">{user.fullName}</h3>
+                          <h3 className="font-semibold text-lg">
+                            {user.fullName}
+                          </h3>
                           {user.location && (
                             <div className="flex items-center text-xs opacity-70 mt-1">
                               <MapPinIcon className="size-3 mr-1" />
@@ -135,20 +157,34 @@ const HomePage = () => {
                         </span>
                       </div>
 
-                      {user.bio && <p className="text-sm opacity-70">{user.bio}</p>}
+                      {user.bio && (
+                        <p className="text-sm opacity-70">{user.bio}</p>
+                      )}
 
                       {/* Action button */}
                       <button
                         className={`btn w-full mt-2 ${
-                          hasRequestBeenSent ? "btn-disabled" : "btn-primary"
-                        } `}
-                        onClick={() => sendRequestMutation(user._id)}
-                        disabled={hasRequestBeenSent || isPending}
+                          hasRequestBeenSent || loadingUserId === user._id
+                            ? "btn-disabled"
+                            : "btn-primary"
+                        }`}
+                        onClick={() => {
+                          setLoadingUserId(user._id);
+                          sendRequestMutation(user._id);
+                        }}
+                        disabled={
+                          hasRequestBeenSent || loadingUserId === user._id
+                        }
                       >
                         {hasRequestBeenSent ? (
                           <>
                             <CheckCircleIcon className="size-4 mr-2" />
                             Request Sent
+                          </>
+                        ) : loadingUserId === user._id ? (
+                          <>
+                            <span className="loading loading-spinner size-4 mr-2" />
+                            Sending...
                           </>
                         ) : (
                           <>
@@ -170,4 +206,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
